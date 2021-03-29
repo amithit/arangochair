@@ -8,11 +8,13 @@ const url  = require('url');
 
 
 const mapTextToType = {
-    'insert/update':'2300',
+    'insert':'2300',
+    'update':'2301',
     'delete':'2302'
 };
 const mapTypeToText = {
-    '2300': 'insert/update',
+    '2300': 'insert',
+    '2301':'update',
     '2302': 'delete'
 };
 
@@ -84,7 +86,10 @@ class ArangoChair extends EventEmitter {
                 if (undefined === colConf) return;
 
                 const events = colConf.get('events');
-
+                console.log("events",events);
+                // const event = this.inferEventType(tid, type);
+                // console.log("event",event);
+                console.log(tid, type);
                 if (0 !== events.size && !events.has(type)) return;
 
                 idx0 = entry.indexOf(keyStartBuffer, idx1 + 9);
@@ -119,7 +124,7 @@ class ArangoChair extends EventEmitter {
 
                         entry = body.slice(start, idx);
                         start = idx+1;
-
+                        
                         // transaction   {"tick":"514132959101","type":2200,"tid":"514132959099","database":"1"}
                         // insert/update {"tick":"514092205556","type":2300,"tid":"0","database":"1","cid":"513417247371","cname":"test","data":{"_id":"test/testkey","_key":"testkey","_rev":"514092205554",...}}
                         // delete        {"tick":"514092206277","type":2302,"tid":"0","database":"1","cid":"513417247371","cname":"test","data":{"_key":"abcdef","_rev":"514092206275"}}
@@ -146,13 +151,23 @@ class ArangoChair extends EventEmitter {
                             txns.delete(tid);
 
                         } else {
-                            if ('2300' !== type && '2302' !== type) continue;
-
-                            if ('0' !== tid) {
-                                txns.get(tid).add([type,entry.slice(idx0+14)]);
-                                continue;
-                            } // if
-
+                            console.log(type);
+                            console.log(tid);
+                            if ('2300' !== type && '2301' !== type && '2302' !== type ) continue;
+                            try{
+                                console.log(txns.get(tid));
+                                if ('0' !== tid) {
+                                    if(txns.get(tid)){
+                                        txns.get(tid).add([type,entry.slice(idx0+14)]);
+                                        continue;
+                                    }
+                                    
+                                } // if
+    
+                            }catch(error){
+                                console.log(error);
+                            }
+                            
                             handleEntry();
                         } // else
                     } // while
@@ -177,6 +192,7 @@ class ArangoChair extends EventEmitter {
             }
 
             if (conf.events) {
+                //console.log(conf.events);
                 for(const event of conf.events) {
                     colConfMap.get('events').add(mapTextToType[event]);
                 } // for
@@ -188,6 +204,17 @@ class ArangoChair extends EventEmitter {
             } // if
         } // for
     } // subscribe()
+
+    // inferEventType(tid, type) {
+
+    //     if (type === 2300) {    // type 2300 means insert or update
+    //         return tid === '0' ? "insert" : "update";    // the tid tells us which of the above it is
+    //     }
+
+    //     if (type === 2302) {     // type 2302 means delete
+    //         return "delete";
+    //     }
+    // }
 
     unsubscribe(confs) {
         if ('string' === typeof confs) confs = {collection:confs};
