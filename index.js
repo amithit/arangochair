@@ -87,10 +87,10 @@ class ArangoChair extends EventEmitter {
                 if (undefined === colConf) return;
 
                 const events = colConf.get('events');
-                console.log("events",events);
+                //console.log("events",events);
                 // const event = this.inferEventType(tid, type);
                 // console.log("event",event);
-                console.log(tid, type);
+                //console.log(tid, type);
                 if (0 !== events.size && !events.has(type)) return;
 
                 idx0 = entry.indexOf(keyStartBuffer, idx1 + 9);
@@ -152,11 +152,11 @@ class ArangoChair extends EventEmitter {
                             txns.delete(tid);
 
                         } else {
-                            console.log(type);
-                            console.log(tid);
+//                             console.log(type);
+//                             console.log(tid);
                             if ('2300' !== type && '2301' !== type && '2302' !== type ) continue;
                             try{
-                                console.log(txns.get(tid));
+                               // console.log(txns.get(tid));
                                 if ('0' !== tid) {
                                     if(txns.get(tid)){
                                         txns.get(tid).add([type,entry.slice(idx0+14)]);
@@ -166,7 +166,7 @@ class ArangoChair extends EventEmitter {
                                 } // if
     
                             }catch(error){
-                                console.log(error);
+                               // console.log(error);
                             }
                             
                             handleEntry();
